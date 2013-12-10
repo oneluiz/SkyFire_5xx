@@ -96,7 +96,7 @@ enum Opcodes
     CMSG_BUG                                                 = 0x0,
     CMSG_BUSY_TRADE                                          = 0x0,
     CMSG_BUYBACK_ITEM                                        = 0x0,
-    CMSG_BUY_BANK_SLOT                                       = 0x0,
+    CMSG_BUY_BANK_SLOT                                       = 0x064D, // 5.4.1 17538
     CMSG_BUY_ITEM                                            = 0x0,
     CMSG_CALENDAR_ADD_EVENT                                  = 0x0,
     CMSG_CALENDAR_ARENA_TEAM                                 = 0x0,
@@ -123,7 +123,7 @@ enum Opcodes
     CMSG_CANCEL_MOUNT_AURA                                   = 0x0,
     CMSG_CANCEL_QUEUED_SPELL                                 = 0x0,
     CMSG_CANCEL_TEMP_ENCHANTMENT                             = 0x0,
-    CMSG_CANCEL_TRADE                                        = 0x0,
+    CMSG_CANCEL_TRADE                                        = 0x12CC, // 5.4.1 17538
     CMSG_CAST_SPELL                                          = 0x0,
     CMSG_CHANGEPLAYER_DIFFICULTY                             = 0x0,
     CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE                  = 0x0,
@@ -132,7 +132,7 @@ enum Opcodes
     CMSG_CHANNEL_DISPLAY_LIST                                = 0x0,
     CMSG_CHANNEL_INVITE                                      = 0x0,
     CMSG_CHANNEL_KICK                                        = 0x0,
-    CMSG_CHANNEL_LIST                                        = 0x0,
+    CMSG_CHANNEL_LIST                                        = 0x1178, // 5.4.1 17538
     CMSG_CHANNEL_MODERATE                                    = 0x0,
     CMSG_CHANNEL_MODERATOR                                   = 0x0,
     CMSG_CHANNEL_MUTE                                        = 0x0,
@@ -178,6 +178,7 @@ enum Opcodes
     CMSG_CORPSE_MAP_POSITION_QUERY                           = 0x0,
     CMSG_CREATURE_QUERY                                      = 0x1647, // 5.4.1 17538
     CMSG_DANCE_QUERY                                         = 0x0,
+    CMSG_DB_QUERY_BULK                                       = 0x01E4, // 5.4.1 17538
     CMSG_DECLINE_CHANNEL_INVITE                              = 0x0,
     CMSG_DEL_FRIEND                                          = 0x0,
     CMSG_DEL_IGNORE                                          = 0x0,
@@ -218,7 +219,7 @@ enum Opcodes
     CMSG_GM_REPORT_LAG                                       = 0x0,
     CMSG_GM_SET_SECURITY_GROUP                               = 0x0,
     CMSG_GOSSIP_HELLO                                        = 0x025C, //5.4.1 17538
-    CMSG_GOSSIP_SELECT_OPTION                                = 0x0,
+    CMSG_GOSSIP_SELECT_OPTION                                = 0x03EE, //5.4.1 17538
     CMSG_GRANT_LEVEL                                         = 0x0,
     CMSG_GROUP_ASSISTANT_LEADER                              = 0x0,
     CMSG_GROUP_CANCEL                                        = 0x0,
@@ -314,7 +315,7 @@ enum Opcodes
     CMSG_LF_GUILD_SET_GUILD_POST                             = 0x0,
     CMSG_LIST_INVENTORY                                      = 0x0,
     CMSG_LOAD_SCREEN                                         = 0x1148, // 5.4.1 17538
-    CMSG_LOGOUT_CANCEL                                       = 0x0,
+    CMSG_LOGOUT_CANCEL                                       = 0x0A7E, // 5.4.1 17538
     CMSG_LOGOUT_REQUEST                                      = 0x03EC, // 5.4.1 17538
     CMSG_LOG_DISCONNECT                                      = 0x14FA, // 5.4.1 17538
     CMSG_LOOT                                                = 0x0,
@@ -636,7 +637,7 @@ enum Opcodes
     MSG_MOVE_TOGGLE_FALL_LOGGING                             = 0x0,
     MSG_MOVE_TOGGLE_LOGGING                                  = 0x0,
     MSG_MOVE_UPDATE_MOUSE                                    = 0x0,
-    MSG_MOVE_WORLDPORT_ACK                                   = 0x12CC, // 5.4.1 17538 - GUESSED !
+    MSG_MOVE_WORLDPORT_ACK                                   = 0x00E0, // 5.4.1 17538 - GUESSED !
     MSG_NOTIFY_PARTY_SQUELCH                                 = 0x0,
     MSG_PARTY_ASSIGNMENT                                     = 0x0,
     MSG_PETITION_DECLINE                                     = 0x0,
@@ -703,7 +704,7 @@ enum Opcodes
     SMSG_AVAILABLE_VOICE_CHANNEL                             = 0x0,
     SMSG_AVERAGE_ITEM_LEVEL_INFORM                           = 0x0,
     SMSG_BARBER_SHOP_RESULT                                  = 0x0,
-    SMSG_BATTLEFIELD_LIST                                    = 0x0,
+    SMSG_BATTLEFIELD_LIST                                    = 0x09B7, // 5.4.1 17538
     SMSG_BATTLEFIELD_MGR_EJECTED                             = 0x0,
     SMSG_BATTLEFIELD_MGR_EJECT_PENDING                       = 0x0,
     SMSG_BATTLEFIELD_MGR_ENTERED                             = 0x0,
@@ -944,7 +945,7 @@ enum Opcodes
     SMSG_GUILD_XP                                            = 0x0,
     SMSG_GUILD_XP_GAIN                                       = 0x0,
     SMSG_GUILD_XP_UPDATE                                     = 0x0,
-    SMSG_HEALTH_UPDATE                                       = 0x0,
+    SMSG_HEALTH_UPDATE                                       = 0x0C36, // 5.4.1 17538
     SMSG_HIGHEST_THREAT_UPDATE                               = 0x0,
     SMSG_HOTFIX_INFO                                         = 0x0C27, // 5.4.1 17538
     SMSG_HOTFIX_NOTIFY                                       = 0x0,
