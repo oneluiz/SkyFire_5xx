@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,12 +29,12 @@ void WorldSession::HandleJoinChannel(WorldPacket& recvPacket)
     std::string channelName, password;
 
     recvPacket >> channelId;
-    uint8 unknown1 = recvPacket.ReadBit();   // unknowns
-    uint8 unknown2 = recvPacket.ReadBit();
-    channelLength = recvPacket.ReadBits(8);
-    passLength = recvPacket.ReadBits(8);
-    channelName = recvPacket.ReadString(channelLength);
+    passLength = recvPacket.ReadBits(7);
+    uint8 unknown1 = recvPacket.ReadBit();                  // unknown bit
+    channelLength = recvPacket.ReadBits(7);
+    uint8 unknown2 = recvPacket.ReadBit();                  // unknown bit
     password = recvPacket.ReadString(passLength);
+    channelName = recvPacket.ReadString(channelLength);
 
     TC_LOG_DEBUG("chat.system", "CMSG_JOIN_CHANNEL %s Channel: %u, unk1: %u, unk2: %u, channel: %s, password: %s",
         GetPlayerInfo().c_str(), channelId, unknown1, unknown2, channelName.c_str(), password.c_str());

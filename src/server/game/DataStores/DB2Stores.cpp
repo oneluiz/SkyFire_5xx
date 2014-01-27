@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2011 TrintiyCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -23,11 +25,13 @@
 #include "World.h"
 #include "DBCStores.h"
 
+DB2Storage<BroadcastTextEntry> sBroadcastTextStore(BroadcastTextfmt/*, &DB2Utilities::HasBroadcastTextEntry, &DB2Utilities::WriteBroadcastTextDbReply*/);
 DB2Storage<ItemEntry> sItemStore(Itemfmt, &DB2Utilities::HasItemEntry, &DB2Utilities::WriteItemDbReply);
 DB2Storage<ItemCurrencyCostEntry> sItemCurrencyCostStore(ItemCurrencyCostfmt);
 DB2Storage<ItemExtendedCostEntry> sItemExtendedCostStore(ItemExtendedCostEntryfmt);
 DB2Storage<ItemSparseEntry> sItemSparseStore(ItemSparsefmt, &DB2Utilities::HasItemSparseEntry, &DB2Utilities::WriteItemSparseDbReply);
 DB2Storage<KeyChainEntry> sKeyChainStore(KeyChainfmt);
+DB2Storage<SceneScriptEntry> sSceneScriptStore(SceneScriptfmt);
 DB2Storage<SpellReagentsEntry> sSpellReagentsStore(SpellReagentsfmt);
 
 typedef std::list<std::string> DB2StoreProblemList;
@@ -97,12 +101,14 @@ void LoadDB2Stores(std::string const& dataPath)
     DB2StoreProblemList bad_db2_files;
     uint32 availableDb2Locales = 0xFF;
 
+    LoadDB2(availableDb2Locales, bad_db2_files, sBroadcastTextStore, db2Path, "BroadcastText.db2");
     LoadDB2(availableDb2Locales, bad_db2_files, sItemStore, db2Path, "Item.db2");
     LoadDB2(availableDb2Locales, bad_db2_files, sItemCurrencyCostStore, db2Path, "ItemCurrencyCost.db2");
     LoadDB2(availableDb2Locales, bad_db2_files, sItemSparseStore, db2Path, "Item-sparse.db2");
     LoadDB2(availableDb2Locales, bad_db2_files, sItemExtendedCostStore, db2Path, "ItemExtendedCost.db2");
     LoadDB2(availableDb2Locales, bad_db2_files, sKeyChainStore, db2Path, "KeyChain.db2");
-    LoadDB2(availableDb2Locales, bad_db2_files, sSpellReagentsStore, db2Path,"SpellReagents.db2");
+    LoadDB2(availableDb2Locales, bad_db2_files, sSceneScriptStore, db2Path, "SceneScript.db2");
+    LoadDB2(availableDb2Locales, bad_db2_files, sSpellReagentsStore, db2Path, "SpellReagents.db2");
 
     // error checks
     if (bad_db2_files.size() >= DB2FilesCount)
@@ -121,10 +127,12 @@ void LoadDB2Stores(std::string const& dataPath)
     }
 
     // Check loaded DB2 files proper version
-    if (!sItemStore.LookupEntry(107499)             ||       // last item added in 5.4.1 (17538)
-        !sItemExtendedCostStore.LookupEntry(5268)  )        // last item extended cost added in 5.4.1 (17538)
+    if (!sBroadcastTextStore.LookupEntry(77161)     ||       // last broadcast text added in 5.4.2 (17688)
+        !sItemStore.LookupEntry(108438)             ||       // last item added in 5.4.2 (17688)
+        !sItemExtendedCostStore.LookupEntry(5268)   ||       // last item extended cost added in 5.4.2 (17688)
+        !sSceneScriptStore.LookupEntry(11156))               // last scene script added in 5.4.2 (17688)        
     {
-        TC_LOG_ERROR("misc", "You have _outdated_ DB2 files, Please extract correct db2 files from client 5.4.1 17538.");
+        TC_LOG_ERROR("misc", "You have _outdated_ DB2 files, Please extract correct db2 files from client 5.4.2 17688.");
         exit(1);
     }
 

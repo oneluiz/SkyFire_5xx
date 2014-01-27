@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -128,8 +129,9 @@ enum CharterTypes
     ARENA_TEAM_CHARTER_5v5_TYPE                   = 5,
 };
 
-#define DB2_REPLY_SPARSE 2442913102
-#define DB2_REPLY_ITEM   1344507586
+#define DB2_REPLY_BROADCAST 35137211
+#define DB2_REPLY_SPARSE    2442913102
+#define DB2_REPLY_ITEM      1344507586
 
 //class to deal with packet processing
 //allows to determine if next packet is safe to be processed
@@ -300,7 +302,7 @@ class WorldSession
         void HandleClientCastFlags(WorldPacket& recvPacket, uint8 castFlags, SpellCastTargets & targets);
 
         // Pet
-        void SendPetNameQuery(uint64 guid, uint32 petnumber);
+        void SendPetNameQuery(ObjectGuid guid, uint64 petNumber);
         void SendStablePet(uint64 guid);
         void SendStablePetCallback(PreparedQueryResult result, uint64 guid);
         void SendStableResult(uint8 guid);
@@ -328,7 +330,7 @@ class WorldSession
         //used with item_page table
         bool SendItemInfo(uint32 itemid, WorldPacket data);
         //auction
-        void SendAuctionHello(uint64 guid, Creature* unit);
+        void SendAuctionHello(ObjectGuid guid, Creature* unit);
         void SendAuctionCommandResult(AuctionEntry* auction, uint32 Action, uint32 ErrorCode, uint32 bidError = 0);
         void SendAuctionBidderNotification(uint32 location, uint32 auctionId, uint64 bidder, uint32 bidSum, uint32 diff, uint32 item_template);
         void SendAuctionOwnerNotification(AuctionEntry* auction);
@@ -955,6 +957,9 @@ class WorldSession
         void HandleViolenceLevel(WorldPacket& recvPacket);
         void HandleObjectUpdateFailedOpcode(WorldPacket& recvPacket);
         void HandleRequestCategoryCooldowns(WorldPacket& recvPacket);
+
+        void SendBroadcastText(uint32 entry);
+
         int32 HandleEnableNagleAlgorithm();
 
         // Compact Unit Frames (4.x)

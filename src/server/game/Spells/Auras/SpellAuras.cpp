@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -178,72 +179,121 @@ void AuraApplication::_HandleEffect(uint8 effIndex, bool apply)
     SetNeedClientUpdate();
 }
 
-void AuraApplication::BuildUpdatePacket(ByteBuffer& data, bool remove) const
-{
-    data << uint8(_slot);
-
-    if (remove)
-    {
-        ASSERT(!_target->GetVisibleAura(_slot));
-        data << uint32(0);
-        return;
-    }
-    ASSERT(_target->GetVisibleAura(_slot));
-
-    Aura const* aura = GetBase();
-    data << uint32(aura->GetId());
-
-    uint32 flags = _flags;
-
-    if (aura->GetMaxDuration() > 0 && !(aura->GetSpellInfo()->AttributesEx5 & SPELL_ATTR5_HIDE_DURATION))
-        flags |= AFLAG_DURATION;
-
-    data << uint16(flags);
-    data << uint32(_effMask);
-
-    data << uint16(aura->GetCasterLevel());
-    // send stack amount for aura which could be stacked (never 0 - causes incorrect display) or charges
-    // stack amount has priority over charges (checked on retail with spell 50262)
-    data << uint8(aura->GetSpellInfo()->StackAmount ? aura->GetStackAmount() : aura->GetCharges());
-
-    if (!(flags & AFLAG_CASTER))
-        data.appendPackGUID(aura->GetCasterGUID());
-
-    if (flags & AFLAG_DURATION)
-    {
-        data << uint32(aura->GetMaxDuration());
-        data << uint32(aura->GetDuration());
-    }
-
-    if (flags & AFLAG_ANY_EFFECT_AMOUNT_SENT)
-    {
-        uint8 effCount = 0;
-        size_t pos = data.wpos();
-        data << uint8(effCount);
-
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
-        {
-            if (HasEffect(i))
-            {
-                effCount++;
-                if (AuraEffect const* eff = aura->GetEffect(i))
-                    data << float(eff->GetAmount());
-                else
-                    data << float(0.f);
-            }
-        }
-
-        data.put<uint8>(pos, effCount);
-    }
-}
-
 void AuraApplication::ClientUpdate(bool remove)
 {
     _needClientUpdate = false;
 
+    ObjectGuid targetGuid = _target->GetGUID();
+    Aura const* aura = GetBase();
+    uint32 flags = _flags;
+    if (aura->GetMaxDuration() > 0 && !(aura->GetSpellInfo()->AttributesEx5 & SPELL_ATTR5_HIDE_DURATION))
+        flags |= AFLAG_DURATION;
+
     WorldPacket data(SMSG_AURA_UPDATE);
-    data.append(GetTarget()->GetPackGUID());
-    BuildUpdatePacket(data, remove);
+    data.WriteBit(targetGuid[3]);
+    data.WriteBit(targetGuid[6]);
+    data.WriteBit(targetGuid[0]);
+    data.WriteBit(targetGuid[7]);
+    data.WriteBit(targetGuid[5]);
+    data.WriteBit(targetGuid[4]);
+    data.WriteBits(1, 24);                              // Aura Count
+    data.WriteBit(0);                                   // Is AURA_UPDATE_ALL
+    data.WriteBit(!remove);                             // HasData
+
+    if (!remove)
+    {
+        if (flags & AFLAG_ANY_EFFECT_AMOUNT_SENT)
+        {
+            uint8 effCount = 0;
+            for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                if (HasEffect(i))
+                    effCount++;
+
+            data.WriteBits(effCount, 22);               // Effect Count
+        }
+        else
+            data.WriteBits(0, 22);                      // Effect Count
+
+        data.WriteBits(0, 22);                          // Unk effect count
+        data.WriteBit(!(flags & AFLAG_CASTER));         // HasCasterGuid
+
+        if (!(flags & AFLAG_CASTER))
+        {
+            ObjectGuid casterGuid = aura->GetCasterGUID();
+            data.WriteBit(casterGuid[7]);
+            data.WriteBit(casterGuid[4]);
+            data.WriteBit(casterGuid[2]);
+            data.WriteBit(casterGuid[5]);
+            data.WriteBit(casterGuid[6]);
+            data.WriteBit(casterGuid[1]);
+            data.WriteBit(casterGuid[3]);
+            data.WriteBit(casterGuid[0]);
+        }
+
+        data.WriteBit(flags & AFLAG_DURATION);          // HasMaxDuration
+        data.WriteBit(flags & AFLAG_DURATION);          // HasDuration
+    }
+
+    data.WriteBit(targetGuid[1]);
+    data.WriteBit(targetGuid[2]);
+    data.FlushBits();
+
+    if (!remove)
+    {
+        if (!(flags & AFLAG_CASTER))
+        {
+            ObjectGuid casterGuid = aura->GetCasterGUID();
+            data.WriteByteSeq(casterGuid[0]);
+            data.WriteByteSeq(casterGuid[3]);
+            data.WriteByteSeq(casterGuid[7]);
+            data.WriteByteSeq(casterGuid[1]);
+            data.WriteByteSeq(casterGuid[2]);
+            data.WriteByteSeq(casterGuid[5]);
+            data.WriteByteSeq(casterGuid[4]);
+            data.WriteByteSeq(casterGuid[6]);
+        }
+
+        if (flags & AFLAG_DURATION)
+            data << uint32(aura->GetDuration());
+
+        if (flags & AFLAG_ANY_EFFECT_AMOUNT_SENT)
+        {
+            for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+            {
+                if (HasEffect(i))
+                {
+                    if (AuraEffect const* eff = aura->GetEffect(i))
+                        data << float(eff->GetAmount());
+                    else
+                        data << float(0.f);
+                }
+            }
+        }
+
+        data << uint16(aura->GetCasterLevel());
+
+        if (flags & AFLAG_DURATION)
+            data << uint32(aura->GetMaxDuration());
+
+        // send stack amount for aura which could be stacked (never 0 - causes incorrect display) or charges
+        // stack amount has priority over charges (checked on retail with spell 50262)
+        data << uint8(aura->GetSpellInfo()->StackAmount ? aura->GetStackAmount() : aura->GetCharges());
+
+        data << uint32(aura->GetId());
+        data << uint8(flags);
+        data << uint32(_effMask);
+    }
+
+    data << uint8(_slot);
+
+    data.WriteByteSeq(targetGuid[5]);
+    data.WriteByteSeq(targetGuid[1]);
+    data.WriteByteSeq(targetGuid[2]);
+    data.WriteByteSeq(targetGuid[6]);
+    data.WriteByteSeq(targetGuid[0]);
+    data.WriteByteSeq(targetGuid[7]);
+    data.WriteByteSeq(targetGuid[4]);
+    data.WriteByteSeq(targetGuid[3]);
 
     _target->SendMessageToSet(&data, true);
 }

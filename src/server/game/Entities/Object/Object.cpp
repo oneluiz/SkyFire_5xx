@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -294,30 +295,33 @@ void Object::DestroyForPlayer(Player* target, bool onDeath) const
         }
     }
 
-    WorldPacket data(SMSG_DESTROY_OBJECT, 8 + 1);
+    WorldPacket data(SMSG_DESTROY_OBJECT, 2 + 8);
     ObjectGuid guid(GetGUID());
 
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(guid[1]);
     data.WriteBit(guid[7]);
     data.WriteBit(guid[2]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[3]);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(onDeath);
-    data.WriteBit(guid[5]);
     data.WriteBit(guid[0]);
-
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[7]);
-    data.WriteByteSeq(guid[0]);
-    data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[5]);
+    data.WriteBit(guid[3]);
 
     //! If the following bool is true, the client will call "void CGUnit_C::OnDeath()" for this object.
     //! OnDeath() does for eg trigger death animation and interrupts certain spells/missiles/auras/sounds...
+    data.WriteBit(onDeath);
+
+    data.WriteBit(guid[4]);
+    data.FlushBits();
+
+    data.WriteByteSeq(guid[1]);
+    data.WriteByteSeq(guid[5]);
+    data.WriteByteSeq(guid[3]);
+    data.WriteByteSeq(guid[0]);
+    data.WriteByteSeq(guid[2]);
+    data.WriteByteSeq(guid[6]);
+    data.WriteByteSeq(guid[7]);
+    data.WriteByteSeq(guid[4]);
+
     target->GetSession()->SendPacket(&data);
 }
 
@@ -361,73 +365,77 @@ uint16 Object::GetUInt16Value(uint16 index, uint8 offset) const
 
 void Object::BuildMovementUpdate(ByteBuffer* data, uint16 flags) const
 {
+   bool IsAreaTrigger = false;
+    bool IsSceneObject = false;
+    
 
-    data->WriteBit(0);
-    data->WriteBit(0);
-    data->WriteBit(0);
-    data->WriteBit(0);
-    data->WriteBit(0);
+    data->WriteBit(flags & UPDATEFLAG_VEHICLE);
     data->WriteBit(flags & UPDATEFLAG_SELF);
     data->WriteBit(0);
-    data->WriteBit(0);//flags & UPDATEFLAG_HAS_TARGET);
-    data->WriteBits(0, 22);
+    data->WriteBit(flags & UPDATEFLAG_TRANSPORT);
+	data->WriteBit(0);
     data->WriteBit(0);
-    data->WriteBit(0);
-    data->WriteBit(0);
-    data->WriteBit(0);
+    data->WriteBit(flags & UPDATEFLAG_HAS_TARGET);
     data->WriteBit(flags & UPDATEFLAG_STATIONARY_POSITION);
+    data->WriteBit(IsAreaTrigger);
     data->WriteBit(0);
+    data->WriteBit(IsSceneObject);
+    data->WriteBit(0);
+    data->WriteBit(0);
+    data->WriteBits(0, 22);
     data->WriteBit(flags & UPDATEFLAG_LIVING);
-    data->WriteBit(0);//flags & UPDATEFLAG_ANIMKITS);
-    data->WriteBit(0);//flags & UPDATEFLAG_VEHICLE);
     data->WriteBit(flags & UPDATEFLAG_GO_TRANSPORT_POSITION);
     data->WriteBit(0);
     data->WriteBit(flags & UPDATEFLAG_ROTATION);
+    data->WriteBit(0);
+    data->WriteBit(0);
+    data->WriteBit(flags & UPDATEFLAG_ANIMKITS);
 
     if (flags & UPDATEFLAG_LIVING)
     {
         Unit const* self = ToUnit();
         ObjectGuid guid = GetGUID();
 
-        data->WriteBit(guid[4]);
-        data->WriteBit(guid[1]);
-        data->WriteBits(0, 19);
         data->WriteBit(guid[5]);
-        data->WriteBit(G3D::fuzzyEq(self->GetOrientation(), 0.0f));
+        data->WriteBit(0);
+        data->WriteBit(1);
+        data->WriteBit(guid[6]);
+        data->WriteBit(0);
+        data->WriteBits(0, 19);
+        data->WriteBit(guid[4]);
+        data->WriteBit(G3D::fuzzyEq(self->GetOrientation(), 0.0f)); //!G3D::fuzzyEq(self->GetOrientation(), 0.0f)
+        data->WriteBit(1);
+        data->WriteBit(1);
+        data->WriteBit(guid[2]);
+        data->WriteBit(guid[3]);
         data->WriteBit(guid[7]);
         data->WriteBits(0, 22);
-        data->WriteBit(0);
-        data->WriteBit(1);
-        data->WriteBit(1);
-        data->WriteBit(guid[3]);
-        data->WriteBit(0);
         data->WriteBit(1);
         data->WriteBit(0);
+        data->WriteBit(1);
+        data->WriteBit(guid[1]);
         data->WriteBit(0);
-        data->WriteBit(guid[2]);
         data->WriteBit(0);
         data->WriteBit(guid[0]);
         data->WriteBit(0);
-        data->WriteBit(guid[6]);
-        data->WriteBit(0);
-        data->WriteBit(1);
-        data->WriteBit(1);
+        data->WriteBit(flags & UPDATEFLAG_TRANSPORT);
     }
     
     if (flags & UPDATEFLAG_GO_TRANSPORT_POSITION)
     {
         WorldObject const* self = static_cast<WorldObject const*>(this);
         ObjectGuid transGuid = self->m_movementInfo.transport.guid;
-        data->WriteBit(transGuid[0]);
-        data->WriteBit(transGuid[7]);
-        data->WriteBit(self->m_movementInfo.transport.time2 && self->m_movementInfo.transport.guid); // Has GO transport time 2
-        data->WriteBit(transGuid[1]);
         data->WriteBit(self->m_movementInfo.transport.time3 && self->m_movementInfo.transport.guid); // Has GO transport time 3
-        data->WriteBit(transGuid[6]);
-        data->WriteBit(transGuid[5]);
+        data->WriteBit(self->m_movementInfo.transport.time2 && self->m_movementInfo.transport.guid); // Has GO transport time 2
+
         data->WriteBit(transGuid[4]);
-        data->WriteBit(transGuid[3]);
         data->WriteBit(transGuid[2]);
+        data->WriteBit(transGuid[7]);
+        data->WriteBit(transGuid[6]);
+        data->WriteBit(transGuid[3]);
+        data->WriteBit(transGuid[0]);
+        data->WriteBit(transGuid[1]);
+        data->WriteBit(transGuid[5]);
     }
 
     data->FlushBits();
@@ -442,28 +450,30 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 flags) const
             movementFlags &= MOVEMENTFLAG_MASK_CREATURE_ALLOWED;
 
         *data << float(self->GetPositionY());
+        data->WriteByteSeq(guid[7]);
+        data->WriteByteSeq(guid[1]);
+        *data << self->GetSpeed(MOVE_TURN_RATE);
+        *data << self->GetSpeed(MOVE_FLIGHT_BACK);
+        *data << self->GetSpeed(MOVE_RUN_BACK);
+        *data << uint32(0);
+        *data << float(self->GetPositionX());
+        data->WriteByteSeq(guid[2]);
+        *data << self->GetSpeed(MOVE_SWIM);
+        *data << self->GetSpeed(MOVE_SWIM_BACK);
+
+        if (!G3D::fuzzyEq(self->GetOrientation(), 0.0f))
+            *data << float(Position::NormalizeOrientation(self->GetOrientation()));
+
         *data << self->GetSpeed(MOVE_FLIGHT);
+        data->WriteByteSeq(guid[6]);
         *data << self->GetSpeed(MOVE_RUN);
+        *data << self->GetSpeed(MOVE_PITCH_RATE);
+        data->WriteByteSeq(guid[0]);
+        data->WriteByteSeq(guid[5]);
         data->WriteByteSeq(guid[4]);
         *data << self->GetSpeed(MOVE_WALK);
-        data->WriteByteSeq(guid[5]);
-        *data << uint32(0);
-        data->WriteByteSeq(guid[1]);
-        *data << self->GetSpeed(MOVE_SWIM_BACK);
-        *data << self->GetSpeed(MOVE_FLIGHT_BACK);
-        data->WriteByteSeq(guid[6]);
-        *data << self->GetSpeed(MOVE_TURN_RATE);
-        *data << float(self->GetPositionX());
-        *data << float(Position::NormalizeOrientation(self->GetOrientation()));
-        *data << self->GetSpeed(MOVE_PITCH_RATE);
-        *data << self->GetSpeed(MOVE_SWIM);
-        data->WriteByteSeq(guid[3]);
-        *data << self->GetSpeed(MOVE_RUN_BACK);
-        data->WriteByteSeq(guid[7]);
-        data->WriteByteSeq(guid[2]);
         *data << float(self->GetPositionZMinusOffset());
-        data->WriteByteSeq(guid[0]);
-
+        data->WriteByteSeq(guid[3]);
     }
 
     if (flags & UPDATEFLAG_STATIONARY_POSITION)
@@ -483,33 +493,32 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 flags) const
         WorldObject const* self = static_cast<WorldObject const*>(this);
         ObjectGuid transGuid = self->m_movementInfo.transport.guid;
         
+        *data << int8(self->GetTransSeat());
+
         if (self->m_movementInfo.transport.time2 && self->m_movementInfo.transport.guid)
             *data << uint32(self->m_movementInfo.transport.time2);
 
         data->WriteBit(transGuid[4]);
-        data->WriteBit(transGuid[2]);
-        data->WriteBit(transGuid[7]);
         data->WriteBit(transGuid[3]);
 
-        *data << uint32(self->GetTransTime());
-        *data << float(self->GetTransOffsetY());
-        
-        data->WriteBit(transGuid[1]);
-
-        *data << float(self->GetTransOffsetZ());
-        *data << int8(self->GetTransSeat());
-        
         if (self->m_movementInfo.transport.time3 && self->m_movementInfo.transport.guid)
             *data << uint32(self->m_movementInfo.transport.time3);
 
+        data->WriteBit(transGuid[7]);
         data->WriteBit(transGuid[6]);
-
-        *data << float(self->GetTransOffsetO());
-        
         data->WriteBit(transGuid[5]);
         data->WriteBit(transGuid[0]);
 
+        *data << float(self->GetTransOffsetZ());
         *data << float(self->GetTransOffsetX());
+        *data << uint32(self->GetTransTime());
+        *data << float(self->GetTransOffsetO());
+
+        data->WriteBit(transGuid[1]);
+
+        *data << float(self->GetTransOffsetY());
+
+        data->WriteBit(transGuid[2]);
     }
 
     if (flags & UPDATEFLAG_ROTATION)

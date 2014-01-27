@@ -1,21 +1,20 @@
 /*
- * Copyright (C) 2005-2013 MaNGOS <http://www.getmangos.com/>
- * Copyright (C) 2008-2013 Trinity <http://www.trinitycore.org/>
- * Copyright (C) 2011-2013 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #define _CRT_SECURE_NO_DEPRECATE
@@ -95,7 +94,7 @@ float CONF_float_to_int16_limit = 2048.0f;   // Max accuracy = val/65536
 float CONF_flat_height_delta_limit = 0.005f; // If max - min less this value - surface is flat
 float CONF_flat_liquid_delta_limit = 0.001f; // If max - min less this value - liquid surface is flat
 
-uint32 CONF_TargetBuild = 17538;              // 5.4.1 17538
+uint32 CONF_TargetBuild = 17688;              // 5.4.2 17688
 
 // List MPQ for extract maps from
 char const* CONF_mpq_list[] =
@@ -113,7 +112,7 @@ char const* CONF_mpq_dbc_list[] =
     "misc.MPQ"
 };
 
-uint32 const Builds[] = {16016, 16048, 16057, 16309, 16357, 16516, 16650, 16844, 16965, 17116, 17266, 17325, 17345, 17538, 0};
+uint32 const Builds[] = {16016, 16048, 16057, 16309, 16357, 16516, 16650, 16844, 16965, 17116, 17266, 17325, 17345, 17538, 17645, 17688};
 #define NEW_BASE_SET_BUILD  16016
 
 char const* Locales[] =
@@ -123,7 +122,9 @@ char const* Locales[] =
     "frFR", "koKR",
     "zhCN", "zhTW",
     "enCN", "enTW",
-    "esMX", "ruRU"
+    "esMX", "ruRU",
+    "ptBR", "ptPT",
+    "itIT",
 };
 
 TCHAR const* LocalesT[] =
@@ -134,9 +135,11 @@ TCHAR const* LocalesT[] =
     _T("zhCN"), _T("zhTW"),
     _T("enCN"), _T("enTW"),
     _T("esMX"), _T("ruRU"),
+    _T("ptBR"), _T("ptPT"),
+    _T("itIT"),
 };
 
-#define LOCALES_COUNT 12
+#define LOCALES_COUNT 15
 
 void CreateDir(std::string const& path)
 {

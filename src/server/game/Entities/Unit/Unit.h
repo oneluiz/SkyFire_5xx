@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -223,9 +224,11 @@ enum ShapeshiftForm
     FORM_BATTLESTANCE       = 0x11,
     FORM_DEFENSIVESTANCE    = 0x12,
     FORM_BERSERKERSTANCE    = 0x13,
-    FORM_TEST               = 0x14,
+    FORM_WISE_SERPENT       = 0x14,
     FORM_ZOMBIE             = 0x15,
     FORM_METAMORPHOSIS      = 0x16,
+    FORM_STURDY_OX          = 0x17,
+    FORM_FIERCE_TIGER       = 0x18,
     FORM_UNDEAD             = 0x19,
     FORM_MASTER_ANGLER      = 0x1A,
     FORM_FLIGHT_EPIC        = 0x1B,

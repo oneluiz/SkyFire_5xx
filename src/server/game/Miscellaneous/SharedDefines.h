@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -4085,13 +4086,15 @@ enum PetNameInvalidReason
 
 enum DungeonStatusFlag
 {
-    DUNGEON_STATUSFLAG_NORMAL = 0x01,
-    DUNGEON_STATUSFLAG_HEROIC = 0x02,
+    DUNGEON_STATUSFLAG_NORMAL    = 0x01,
+    DUNGEON_STATUSFLAG_HEROIC    = 0x02,
 
     RAID_STATUSFLAG_10MAN_NORMAL = 0x01,
     RAID_STATUSFLAG_25MAN_NORMAL = 0x02,
     RAID_STATUSFLAG_10MAN_HEROIC = 0x04,
-    RAID_STATUSFLAG_25MAN_HEROIC = 0x08
+    RAID_STATUSFLAG_25MAN_HEROIC = 0x08,
+    RAID_STATUSFLAG_10MAN_FLEX   = 0x16,
+    RAID_STATUSFLAG_25MAN_LFR    = 0x32
 };
 
 #define VOID_STORAGE_UNLOCK       100*GOLD

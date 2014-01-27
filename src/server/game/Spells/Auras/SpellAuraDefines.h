@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,6 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+ 
 #ifndef TRINITY_SPELLAURADEFINES_H
 #define TRINITY_SPELLAURADEFINES_H
 
@@ -436,8 +438,66 @@ enum AuraType
     SPELL_AURA_MOD_CURRENCY_GAIN2                           = 376,
     SPELL_AURA_CAST_WHILE_WALKING2                          = 377,
     // 378 unusued
-    // Will do more later
-    TOTAL_AURAS                                             = 438   // 4.3.4
+    SPELL_AURA_379                                          = 379,
+    // 380 unused
+    SPELL_AURA_381                                          = 381,
+    SPELL_AURA_382                                          = 382,
+    SPELL_AURA_383                                          = 383,
+    // 384 unused
+    SPELL_AURA_385                                          = 385,
+    SPELL_AURA_386                                          = 386,
+    SPELL_AURA_387                                          = 387,
+    SPELL_AURA_388                                          = 388,
+    // 389 unused
+    // 390 unused
+    // 391 unused
+    // 392 unused
+    SPELL_AURA_393                                          = 393,
+    SPELL_AURA_394                                          = 394,
+    SPELL_AURA_395                                          = 395,
+    SPELL_AURA_396                                          = 396,
+    SPELL_AURA_397                                          = 397,
+    SPELL_AURA_398                                          = 398,
+    // 399 unused
+    SPELL_AURA_400                                          = 400,
+    SPELL_AURA_401                                          = 401,
+    SPELL_AURA_402                                          = 402,
+    SPELL_AURA_403                                          = 403,
+    SPELL_AURA_404                                          = 404,
+    SPELL_AURA_405                                          = 405,
+    SPELL_AURA_406                                          = 406,
+    SPELL_AURA_407                                          = 407,
+    SPELL_AURA_408                                          = 408,
+    SPELL_AURA_409                                          = 409,
+    SPELL_AURA_410                                          = 410,
+    SPELL_AURA_411                                          = 411,
+    SPELL_AURA_412                                          = 412,
+    SPELL_AURA_413                                          = 413,
+    SPELL_AURA_414                                          = 414,
+    SPELL_AURA_415                                          = 415,
+    SPELL_AURA_416                                          = 416,
+    SPELL_AURA_417                                          = 417,
+    SPELL_AURA_418                                          = 418,
+    SPELL_AURA_419                                          = 419,
+    SPELL_AURA_420                                          = 420,
+    SPELL_AURA_421                                          = 421,
+    SPELL_AURA_422                                          = 422,
+    SPELL_AURA_423                                          = 423,
+    SPELL_AURA_424                                          = 424,
+    // 425 unused
+    SPELL_AURA_426                                          = 426,
+    SPELL_AURA_427                                          = 427,
+    SPELL_AURA_428                                          = 428,
+    SPELL_AURA_429                                          = 429,
+    SPELL_AURA_430                                          = 430,
+    SPELL_AURA_431                                          = 431,
+    SPELL_AURA_432                                          = 432,
+    // 433 unused
+    SPELL_AURA_434                                          = 434,
+    // 435 unused
+    SPELL_AURA_436                                          = 436,
+    SPELL_AURA_437                                          = 437,
+    TOTAL_AURAS                                             = 438   // 5.4.2
 };
 
 enum AuraObjectType

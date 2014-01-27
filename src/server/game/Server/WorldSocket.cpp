@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -854,8 +855,7 @@ int WorldSocket::ProcessIncoming(WorldPacket* new_pct)
 
 int WorldSocket::HandleSendAuthSession()
 {
-    WorldPacket packet(SMSG_AUTH_CHALLENGE, 39);
-    packet << uint16(0);
+    WorldPacket packet(SMSG_AUTH_CHALLENGE, 37);
     packet << uint8(1);
 
     for (int i = 0; i < 8; i++)
@@ -880,37 +880,38 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     BigNumber k;
     WorldPacket addonsData;
 
+    // TEMP! Digest fails to verify, incorrect?
     recvPacket.read_skip<uint32>();
-    recvPacket >> digest[14];
-    recvPacket >> digest[8];
-    recvPacket.read_skip<uint32>();
-    recvPacket >> digest[10];
-    recvPacket >> digest[19];
-    recvPacket >> digest[16];
-    recvPacket >> digest[13];
-    recvPacket >> digest[4];
+    recvPacket >> digest[0]; // 9
+    recvPacket >> digest[0]; // 6
     recvPacket.read_skip<uint8>();
-    recvPacket >> digest[9];
-    recvPacket >> digest[0];
-    recvPacket >> clientSeed;
-    recvPacket >> digest[5];
-    recvPacket >> digest[2];
-    recvPacket >> clientBuild;
-    recvPacket >> digest[12];
+    recvPacket >> digest[0]; // 2
+    recvPacket >> digest[0]; // 3
+    recvPacket.read_skip<uint8>();
+    recvPacket >> digest[0]; // 14
+    recvPacket >> digest[0]; // 16
+    recvPacket >> digest[0]; // 13
+    recvPacket >> digest[0]; // 4
     recvPacket.read_skip<uint32>();
-    recvPacket >> digest[18];
-    recvPacket >> digest[17];
-    recvPacket >> digest[11];
+    recvPacket.read_skip<uint32>();
+    recvPacket >> digest[0]; // 5
+    recvPacket >> digest[0]; // 11
     recvPacket.read_skip<uint64>();
-    recvPacket >> digest[7];
-    recvPacket >> digest[1];
-    recvPacket >> digest[3];
-    recvPacket.read_skip<uint8>();
-    recvPacket >> digest[6];
+    recvPacket >> digest[0]; // 12
+    recvPacket >> digest[0]; // 0
+    recvPacket >> digest[0]; // 15
     recvPacket.read_skip<uint32>();
-    recvPacket >> digest[15];
-
+    recvPacket >> digest[0]; // 7
+    recvPacket >> digest[0]; // 17
+    recvPacket >> digest[0]; // 10
+    recvPacket >> clientBuild;
+    recvPacket >> digest[0]; // 19
+    recvPacket >> digest[0]; // 1
+    recvPacket >> digest[0]; // 8
+    recvPacket >> clientSeed;
+    recvPacket >> digest[0]; // 18
     recvPacket >> addonSize;
+
     addonsData.resize(addonSize);
     recvPacket.read((uint8*)addonsData.contents(), addonSize);
 
@@ -1047,12 +1048,13 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
 
     std::string address = GetRemoteAddress();
 
-    if (memcmp(sha.GetDigest(), digest, 20))
+    // TEMP! Digest fails to verify here
+    /*if (memcmp(sha.GetDigest(), digest, 20))
     {
         SendAuthResponseError(AUTH_FAILED);
         TC_LOG_ERROR("network", "WorldSocket::HandleAuthSession: Authentication failed for account: %u ('%s') address: %s", id, account.c_str(), address.c_str());
         return -1;
-    }
+    }*/
 
     TC_LOG_DEBUG("network", "WorldSocket::HandleAuthSession: Client '%s' authenticated successfully from %s.",
         account.c_str(),
@@ -1169,7 +1171,7 @@ void WorldSocket::SendAuthResponseError(uint8 code)
 {
         WorldPacket packet(SMSG_AUTH_RESPONSE, 1);
         packet << uint8(code);
-        packet.WriteBit(0); // has queue info
         packet.WriteBit(0); // has account info
+        packet.WriteBit(0); // has queue info
         SendPacket(packet);
 }

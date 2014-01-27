@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -30,8 +31,25 @@
 
 void WorldSession::HandleAttackSwingOpcode(WorldPacket& recvData)
 {
-    uint64 guid;
-    recvData >> guid;
+    ObjectGuid guid;
+
+    guid[2] = recvData.ReadBit();
+    guid[6] = recvData.ReadBit();
+    guid[3] = recvData.ReadBit();
+    guid[0] = recvData.ReadBit();
+    guid[1] = recvData.ReadBit();
+    guid[7] = recvData.ReadBit();
+    guid[5] = recvData.ReadBit();
+    guid[4] = recvData.ReadBit();
+
+    recvData.ReadByteSeq(guid[6]);
+    recvData.ReadByteSeq(guid[1]);
+    recvData.ReadByteSeq(guid[4]);
+    recvData.ReadByteSeq(guid[0]);
+    recvData.ReadByteSeq(guid[3]);
+    recvData.ReadByteSeq(guid[7]);
+    recvData.ReadByteSeq(guid[5]);
+    recvData.ReadByteSeq(guid[2]);
 
     TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_ATTACKSWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid));
 
@@ -76,17 +94,23 @@ void WorldSession::HandleAttackStopOpcode(WorldPacket & /*recvData*/)
 void WorldSession::HandleSetSheathedOpcode(WorldPacket& recvData)
 {
     uint32 sheathed;
+    bool hasData = false;
+
     recvData >> sheathed;
+    hasData = recvData.ReadBit();
 
     //TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_SETSHEATHED Message guidlow:%u value1:%u", GetPlayer()->GetGUIDLow(), sheathed);
 
-    if (sheathed >= MAX_SHEATH_STATE)
+    if (hasData)
     {
-        TC_LOG_ERROR("network", "Unknown sheath state %u ??", sheathed);
-        return;
-    }
+        if (sheathed >= MAX_SHEATH_STATE)
+        {
+            TC_LOG_ERROR("network", "Unknown sheath state %u ??", sheathed);
+            return;
+        }
 
-    GetPlayer()->SetSheath(SheathState(sheathed));
+        GetPlayer()->SetSheath(SheathState(sheathed));
+    }
 }
 
 void WorldSession::SendAttackStop(Unit const* enemy)

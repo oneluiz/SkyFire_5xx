@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2011 TrintiyCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2014 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -29,6 +31,23 @@
 #endif
 
 // Structures used to access raw DB2 data and required packing to portability
+struct BroadcastTextEntry
+{
+    uint32   ID;                                             // 0
+    //uint32   Unk0;                                         // 1
+    LocalizedString* text_0;                                 // 2
+    LocalizedString* text_1;                                 // 3
+    //uint32   Unk1;                                         // 4
+    //uint32   Unk2;                                         // 5
+    //uint32   Unk3;                                         // 6
+    //uint32   Unk4;                                         // 7
+    //uint32   Unk5;                                         // 8
+    //uint32   Unk6;                                         // 9
+    uint32   SoundID;                                        // 10
+    //uint32   Unk7;                                         // 11
+    //uint32   Unk8;                                         // 12
+};
+
 struct ItemEntry
 {
     uint32   ID;                                             // 0
@@ -148,6 +167,16 @@ struct KeyChainEntry
 {
     uint32      Id;
     uint8       Key[KEYCHAIN_SIZE];
+};
+
+// SceneScript.db2
+struct SceneScriptEntry
+{
+    uint32 m_ID;                                             // 0         m_ID
+    LocalizedString* m_name;                                 // 1         m_name
+    LocalizedString* m_script;                               // 2         m_script
+    uint32 m_prevScriptPartID;                               // 3         m_prevScriptPartID - Prev Script Part Id From Chain
+    uint32 m_nextScriptPartID;                               // 4         m_nextScriptPartID - Next Script Part Id From Chain
 };
 
 // SpellReagents.db2
