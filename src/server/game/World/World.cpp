@@ -283,6 +283,7 @@ void World::AddSession_(WorldSession* s)
     s->SendAddonsInfo();
     s->SendClientCacheVersion(sWorld->getIntConfig(CONFIG_CLIENTCACHE_VERSION));
     s->SendTutorialsData();
+    s->SendTimezoneInformation();
 
     UpdateMaxSessionCounters();
 
@@ -380,6 +381,7 @@ bool World::RemoveQueuedPlayer(WorldSession* sess)
         pop_sess->SendClientCacheVersion(sWorld->getIntConfig(CONFIG_CLIENTCACHE_VERSION));
         pop_sess->SendAccountDataTimes(GLOBAL_CACHE_MASK);
         pop_sess->SendTutorialsData();
+        pop_sess->SendTimezoneInformation();
 
         m_QueuedPlayer.pop_front();
 
@@ -1228,6 +1230,9 @@ void World::LoadConfigSettings(bool reload)
     // Accountpassword Secruity
     m_int_configs[CONFIG_ACC_PASSCHANGESEC] = sConfigMgr->GetIntDefault("Account.PasswordChangeSecurity", 0);
 
+    // Rbac Free Permission mode
+    m_int_configs[CONFIG_RBAC_FREE_PERMISSION_MODE] = sConfigMgr->GetIntDefault("RBAC.FreePermissionMode", 0);
+
     // Random Battleground Rewards
     m_int_configs[CONFIG_BG_REWARD_WINNER_HONOR_FIRST] = sConfigMgr->GetIntDefault("Battleground.RewardWinnerHonorFirst", 27000);
     m_int_configs[CONFIG_BG_REWARD_WINNER_CONQUEST_FIRST] = sConfigMgr->GetIntDefault("Battleground.RewardWinnerConquestFirst", 10000);
@@ -1876,7 +1881,8 @@ void World::SetInitialWorldSettings()
     LoadCharacterNameData();
 
     TC_LOG_INFO("misc", "Initializing Opcodes...");
-    opcodeTable.Initialize();
+    serverOpcodeTable.InitializeServerTable();
+    clientOpcodeTable.InitializeClientTable();
 
     TC_LOG_INFO("misc", "Loading hotfix info...");
     sObjectMgr->LoadHotfixData();
@@ -1925,9 +1931,8 @@ void World::LoadAutobroadcasts()
     m_Autobroadcasts.clear();
     m_AutobroadcastsWeights.clear();
 
-    uint32 realmId = sConfigMgr->GetIntDefault("RealmID", 0);
     PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_AUTOBROADCAST);
-    stmt->setInt32(0, realmId);
+    stmt->setInt32(0, realmID);
     PreparedQueryResult result = LoginDatabase.Query(stmt);
 
     if (!result)

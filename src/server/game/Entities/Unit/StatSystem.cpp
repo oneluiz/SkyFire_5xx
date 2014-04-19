@@ -451,7 +451,7 @@ void Player::UpdateBlockPercentage()
 
         value = value < 0.0f ? 0.0f : value;
     }
-    SetStatFloatValue(PLAYER_FIELD_PLAYER_FLAGS, value);
+    SetStatFloatValue(PLAYER_FIELD_BLOCK_PERCENTAGE, value);
 }
 
 void Player::UpdateCritPercentage(WeaponAttackType attType)
@@ -1129,6 +1129,9 @@ void Guardian::UpdateMaxPower(Powers power)
     value *= GetModifierValue(unitMod, BASE_PCT);
     value += GetModifierValue(unitMod, TOTAL_VALUE) + addValue * multiplicator;
     value *= GetModifierValue(unitMod, TOTAL_PCT);
+
+    if(power == POWER_MANA && value >= 300000)
+        value = 300000;
 
     SetMaxPower(power, uint32(value));
 }

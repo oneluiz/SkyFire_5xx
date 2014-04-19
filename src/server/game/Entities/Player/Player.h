@@ -1785,6 +1785,8 @@ class Player : public Unit, public GridObject<Player>
         void SetSpecsCount(uint8 count) { _talentMgr->SpecsCount = count; }
 
         bool ResetTalents(bool noCost = false, bool resetTalents = true, bool resetSpecialization = true);
+        bool RemoveTalent(uint32 talentId);
+
         uint32 GetNextResetTalentsCost() const;
         void InitTalentForLevel();
         void BuildPlayerTalentsInfoData(WorldPacket* data);
@@ -2202,8 +2204,8 @@ class Player : public Unit, public GridObject<Player>
         std::vector<ItemSetEffect*> ItemSetEff;
 
         void SendLoot(uint64 guid, LootType loot_type);
-        void SendLootRelease(uint64 guid);
-        void SendNotifyLootItemRemoved(uint8 lootSlot);
+        void SendLootRelease(ObjectGuid guid);
+        void SendNotifyLootItemRemoved(uint8 lootSlot, ObjectGuid guid);
         void SendNotifyLootMoneyRemoved();
 
         /*********************************************************/
