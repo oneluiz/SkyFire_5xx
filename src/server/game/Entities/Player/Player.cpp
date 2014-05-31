@@ -703,6 +703,7 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
     m_regenTimer = 0;
     m_regenTimerCount = 0;
     m_holyPowerRegenTimerCount = 0;
+    m_chiPowerRegenTimerCount = 0;
     m_focusRegenTimerCount = 0;
     m_weaponChangeTimer = 0;
 
@@ -2329,10 +2330,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             {
                 // send transfer packets
                 WorldPacket data(SMSG_TRANSFER_PENDING, 4 + 4 + 4);
-                data << uint32(mapid);
 
                 data.WriteBit(0);       // unknown
                 data.WriteBit(m_transport != NULL);
+
+                data << uint32(mapid);
 
                 if (m_transport)
                 {
@@ -2356,11 +2358,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             if (!GetSession()->PlayerLogout())
             {
                 WorldPacket data(SMSG_NEW_WORLD, 4 + 4 + 4 + 4 + 4);
+                data << float(m_teleport_dest.GetPositionX());
                 data << uint32(mapid);
                 data << float(m_teleport_dest.GetPositionY());
                 data << float(m_teleport_dest.GetPositionZ());
                 data << float(m_teleport_dest.GetOrientation());
-                data << float(m_teleport_dest.GetPositionX());
                 GetSession()->SendPacket(&data);
                 SendSavedInstances();
             }
@@ -2517,6 +2519,9 @@ void Player::RegenerateAll()
     if (getClass() == CLASS_PALADIN)
         m_holyPowerRegenTimerCount += m_regenTimer;
 
+    if (getClass() == CLASS_MONK)
+        m_chiPowerRegenTimerCount += m_regenTimer;
+
     if (getClass() == CLASS_HUNTER)
         m_focusRegenTimerCount += m_regenTimer;
 
@@ -2563,9 +2568,6 @@ void Player::RegenerateAll()
         if (getClass() == CLASS_DEATH_KNIGHT)
             Regenerate(POWER_RUNIC_POWER);
 
-        if (getClass() == CLASS_MONK)
-            Regenerate(POWER_CHI);
-
         m_regenTimerCount -= 2000;
     }
 
@@ -2573,6 +2575,12 @@ void Player::RegenerateAll()
     {
         Regenerate(POWER_HOLY_POWER);
         m_holyPowerRegenTimerCount -= 10000;
+    }
+
+    if (m_chiPowerRegenTimerCount >= 10000 && getClass() == CLASS_MONK)
+    {
+        Regenerate(POWER_CHI);
+        m_chiPowerRegenTimerCount -= 10000;
     }
 
     m_regenTimer = 0;
@@ -2626,7 +2634,7 @@ void Player::Regenerate(Powers power)
         case POWER_FOCUS:
             addvalue += (6.0f + CalculatePct(6.0f, rangedHaste)) * sWorld->getRate(RATE_POWER_FOCUS);
             break;
-        case POWER_ENERGY:                                              // Regenerate energy (rogue)
+        case POWER_ENERGY:                                              // Regenerate energy (rogue) & (monk)
             addvalue += ((0.01f * m_regenTimer) + CalculatePct(0.01f, meleeHaste)) * sWorld->getRate(RATE_POWER_ENERGY);
             break;
         case POWER_RUNIC_POWER:
@@ -2646,12 +2654,12 @@ void Player::Regenerate(Powers power)
         break;
         case POWER_RUNES:
             break;
-        case POWER_CHI:                                  // Regenerate chi (monk)
-            {
-                float ChiRate = sWorld->getRate(RATE_POWER_CHI);
-                addvalue = 20 * ChiRate;
-                break;
-            }
+        case POWER_CHI:                                                 // Regenerate chi (monk)
+        {
+            if (!IsInCombat())
+            addvalue += -1.0f;      // remove 1 each 10 sec
+        }
+        break;
         case POWER_HEALTH:
             return;
         default:
@@ -7427,23 +7435,25 @@ void Player::SendNewCurrency(uint32 id) const
     uint32 precision = (entry->Flags & CURRENCY_FLAG_HIGH_PRECISION) ? CURRENCY_PRECISION : 1;
     uint32 weekCount = itr->second.weekCount / precision;
     uint32 weekCap = GetCurrencyWeekCap(entry) / precision;
+    uint32 seasonCount = 0;
 
+    packet.WriteBit(seasonCount);
     packet.WriteBits(0, 5); // some flags
     packet.WriteBit(weekCap);
     packet.WriteBit(weekCount);
-    packet.WriteBit(0);     // season total earned
-
-    currencyData << uint32(itr->second.totalCount / precision);
-    currencyData << uint32(entry->ID);
-
-    if (weekCap)
-        currencyData << uint32(weekCap);
-
-    //if (seasonTotal)
-    //    currencyData << uint32(seasonTotal / precision);
 
     if (weekCount)
         currencyData << uint32(weekCount);
+
+    currencyData << uint32(entry->ID);
+
+    if (seasonCount)
+        currencyData << uint32(seasonCount);
+
+    currencyData << uint32(itr->second.totalCount / precision);
+
+    if (weekCap)
+        currencyData << uint32(weekCap);
 
     packet.FlushBits();
     packet.append(currencyData);
@@ -7469,23 +7479,25 @@ void Player::SendCurrencies() const
         uint32 precision = (entry->Flags & CURRENCY_FLAG_HIGH_PRECISION) ? CURRENCY_PRECISION : 1;
         uint32 weekCount = itr->second.weekCount / precision;
         uint32 weekCap = GetCurrencyWeekCap(entry) / precision;
+        uint32 seasonCount = 0;
 
+        packet.WriteBit(seasonCount);
         packet.WriteBits(0, 5); // some flags
         packet.WriteBit(weekCap);
         packet.WriteBit(weekCount);
-        packet.WriteBit(0);     // season total earned
-
-        currencyData << uint32(itr->second.totalCount / precision);
-        currencyData << uint32(entry->ID);
-
-        if (weekCap)
-            currencyData << uint32(weekCap);
-
-        //if (seasonTotal)
-        //    currencyData << uint32(seasonTotal / precision);
 
         if (weekCount)
             currencyData << uint32(weekCount);
+
+        currencyData << uint32(entry->ID);
+
+        if (seasonCount)
+            currencyData << uint32(seasonCount);
+
+        currencyData << uint32(itr->second.totalCount / precision);
+
+        if (weekCap)
+            currencyData << uint32(weekCap);
 
         ++count;
     }
@@ -17070,16 +17082,16 @@ void Player::SendQuestReward(Quest const* quest, uint32 XP)
     }
 
     WorldPacket data(SMSG_QUESTGIVER_QUEST_COMPLETE, 4 + 4 + 4 + 4 + 4 + 4 + 1);
-    data << uint32(quest->GetRewardSkillPoints());         // 4.x bonus skill points
-    data << uint32(questId);
-    data << uint32(quest->GetBonusTalents());              // bonus talents (still sent to 5.4.7 client)
-    data << uint32(quest->GetRewardSkillId());             // 4.x bonus skill id
-    data << uint32(moneyReward);
-    data << uint32(xp);
-
     data.WriteBit(1);                                      // FIXME: unknown bits, common values sent
     data.WriteBit(0);
     data.FlushBits();
+
+    data << uint32(quest->GetBonusTalents());              // bonus talents (still sent to 5.4.x client)
+    data << uint32(moneyReward);
+    data << uint32(questId);
+    data << uint32(quest->GetRewardSkillId());             // 4.x bonus skill id
+    data << uint32(xp);
+    data << uint32(quest->GetRewardSkillPoints());         // 4.x bonus skill points
 
     GetSession()->SendPacket(&data);
 }
@@ -17161,28 +17173,29 @@ void Player::SendQuestUpdateAddCreatureOrGo(Quest const* quest, uint64 guid, uin
     ObjectGuid oGuid = guid;
 
     WorldPacket data(SMSG_QUESTUPDATE_ADD_KILL, 1 + 8 + 2 + 1 + 4 + 2 + 4);
-    data.WriteBit(oGuid[5]);
-    data.WriteBit(oGuid[3]);
-    data.WriteBit(oGuid[6]);
-    data.WriteBit(oGuid[7]);
-    data.WriteBit(oGuid[4]);
+    data << uint16(old_count + add_count);
+    data << uint8(0);
+    data << uint32(quest->GetQuestId());
+    data << uint16(quest->RequiredNpcOrGoCount[creatureOrGO_idx]);
+    data << uint32(entry);
+
+    data.WriteBit(oGuid[0]);
     data.WriteBit(oGuid[1]);
     data.WriteBit(oGuid[2]);
-    data.WriteBit(oGuid[0]);
+    data.WriteBit(oGuid[6]);
+    data.WriteBit(oGuid[1]);
+    data.WriteBit(oGuid[5]);
+    data.WriteBit(oGuid[7]);
+    data.WriteBit(oGuid[3]);
 
-    data.WriteByteSeq(oGuid[4]);
-    data << uint16(quest->RequiredNpcOrGoCount[ creatureOrGO_idx ]);
-    data << uint8(0);
-    data.WriteByteSeq(oGuid[6]);
-    data << uint32(entry);
-    data.WriteByteSeq(oGuid[0]);
+    data.WriteByteSeq(oGuid[2]);
+    data.WriteByteSeq(oGuid[7]);
     data.WriteByteSeq(oGuid[3]);
-    data.WriteByteSeq(oGuid[1]);
+    data.WriteByteSeq(oGuid[0]);
+    data.WriteByteSeq(oGuid[4]);
     data.WriteByteSeq(oGuid[5]);
     data.WriteByteSeq(oGuid[2]);
-    data << uint16(old_count + add_count);
-    data.WriteByteSeq(oGuid[7]);
-    data << uint32(quest->GetQuestId());
+    data.WriteByteSeq(oGuid[6]);
 
     GetSession()->SendPacket(&data);
     TC_LOG_DEBUG("network", "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL");
@@ -20648,27 +20661,9 @@ void Player::SendAttackSwingCancelAttack()
 {
     ObjectGuid guid = GetGUID();
 
-    WorldPacket data(SMSG_CANCEL_COMBAT, 0);
-    data.WriteBit(guid[3]);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[2]);
-    data.WriteBit(guid[5]);
-
-    data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[3]);
-    data << uint8(0); // Unk
-    data.WriteByteSeq(guid[7]);
+    WorldPacket data(SMSG_CANCEL_COMBAT, 8);
     data << uint32(0); // Unk
-    data.WriteByteSeq(guid[1]);
-    data << uint8(0); //Unk
-    data.WriteByteSeq(guid[0]);
+    data << uint32(0); // Unk
 
     GetSession()->SendPacket(&data);
 }
@@ -20982,112 +20977,111 @@ inline void Player::BuildPlayerChat(WorldPacket* data, uint8 msgtype, const std:
 {
     data->Initialize(SMSG_MESSAGECHAT, 100); // guess size
 
-    ObjectGuid target = 0;
+    ObjectGuid target = GetGUID();
     ObjectGuid source = GetGUID();
     ObjectGuid unkGuid = 0;
     ObjectGuid unkGuid2 = 0;
 
-    data->WriteBit(0);
-    data->WriteBit(0);
-
-    data->WriteBit(unkGuid2[4]);
-    data->WriteBit(unkGuid2[5]);
-    data->WriteBit(unkGuid2[1]);
-    data->WriteBit(unkGuid2[0]);
-    data->WriteBit(unkGuid2[2]);
-    data->WriteBit(unkGuid2[6]);
-    data->WriteBit(unkGuid2[7]);
-    data->WriteBit(unkGuid2[3]);
-
-    data->WriteBit(1);
-    data->WriteBit(0); // Send Language
-
-    data->WriteBit(source[2]);
-    data->WriteBit(source[7]);
-    data->WriteBit(source[0]);
-    data->WriteBit(source[3]);
-    data->WriteBit(source[4]);
-    data->WriteBit(source[6]);
-    data->WriteBit(source[1]);
-    data->WriteBit(source[5]);
-
-    data->WriteBit(0); // Show in chat log - 1 for showing only in bubble
-    data->WriteBit(1);
-    data->WriteBit(1);
     data->WriteBit(1);
     data->WriteBit(0);
     data->WriteBit(0);
-
-    data->WriteBit(target[5]);
-    data->WriteBit(target[7]);
-    data->WriteBit(target[6]);
-    data->WriteBit(target[4]);
-    data->WriteBit(target[3]);
-    data->WriteBit(target[2]);
-    data->WriteBit(target[1]);
-    data->WriteBit(target[0]);
-
     data->WriteBit(1);
     data->WriteBit(0);
+    data->WriteBit(1);
+    data->WriteBit(1);
+    data->WriteBit(1);
 
+    data->WriteBit(unkGuid[0]);
+    data->WriteBit(unkGuid[1]);
     data->WriteBit(unkGuid[5]);
+    data->WriteBit(unkGuid[4]);
+    data->WriteBit(unkGuid[3]);
     data->WriteBit(unkGuid[2]);
     data->WriteBit(unkGuid[6]);
-    data->WriteBit(unkGuid[1]);
     data->WriteBit(unkGuid[7]);
-    data->WriteBit(unkGuid[3]);
-    data->WriteBit(unkGuid[0]);
-    data->WriteBit(unkGuid[4]);
+
+    data->WriteBit(0);
+
+    data->WriteBit(source[7]);
+    data->WriteBit(source[6]);
+    data->WriteBit(source[1]);
+    data->WriteBit(source[4]);
+    data->WriteBit(source[0]);
+    data->WriteBit(source[2]);
+    data->WriteBit(source[3]);
+    data->WriteBit(source[5]);
+
+    data->WriteBit(0);
+    data->WriteBit(0); // Send Language
+    data->WriteBit(1);
+
+    data->WriteBit(target[0]);
+    data->WriteBit(target[3]);
+    data->WriteBit(target[7]);
+    data->WriteBit(target[2]);
+    data->WriteBit(target[1]);
+    data->WriteBit(target[5]);
+    data->WriteBit(target[4]);
+    data->WriteBit(target[6]);
 
     data->WriteBit(1);
-    data->WriteBits(text.size(), 12);
     data->WriteBit(0);
+    data->WriteBits(text.size(), 12);
     data->WriteBit(1);
     data->WriteBit(1);
-    data->WriteBit(1);
+    data->WriteBit(0);
+
+    data->WriteBit(unkGuid2[2]);
+    data->WriteBit(unkGuid2[5]);
+    data->WriteBit(unkGuid2[7]);
+    data->WriteBit(unkGuid2[4]);
+    data->WriteBit(unkGuid2[0]);
+    data->WriteBit(unkGuid2[1]);
+    data->WriteBit(unkGuid2[3]);
+    data->WriteBit(unkGuid2[6]);
 
     data->FlushBits();
 
-    data->WriteByteSeq(unkGuid2[7]);
-    data->WriteByteSeq(unkGuid2[2]);
-    data->WriteByteSeq(unkGuid2[1]);
     data->WriteByteSeq(unkGuid2[4]);
-    data->WriteByteSeq(unkGuid2[6]);
     data->WriteByteSeq(unkGuid2[5]);
+    data->WriteByteSeq(unkGuid2[7]);
     data->WriteByteSeq(unkGuid2[3]);
+    data->WriteByteSeq(unkGuid2[2]);
+    data->WriteByteSeq(unkGuid2[6]);
     data->WriteByteSeq(unkGuid2[0]);
+    data->WriteByteSeq(unkGuid2[1]);
 
-    data->WriteByteSeq(unkGuid[5]);
-    data->WriteByteSeq(unkGuid[3]);
-    data->WriteByteSeq(unkGuid[2]);
-    data->WriteByteSeq(unkGuid[4]);
-    data->WriteByteSeq(unkGuid[1]);
-    data->WriteByteSeq(unkGuid[0]);
-    data->WriteByteSeq(unkGuid[7]);
-    data->WriteByteSeq(unkGuid[6]);
+    data->WriteByteSeq(target[4]);
+    data->WriteByteSeq(target[7]);
+    data->WriteByteSeq(target[1]);
+    data->WriteByteSeq(target[5]);
+    data->WriteByteSeq(target[0]);
+    data->WriteByteSeq(target[6]);
+    data->WriteByteSeq(target[2]);
+    data->WriteByteSeq(target[3]);
 
     *data << uint8(msgtype);
 
-    data->WriteByteSeq(source[4]);
+    data->WriteByteSeq(unkGuid[1]);
+    data->WriteByteSeq(unkGuid[3]);
+    data->WriteByteSeq(unkGuid[4]);
+    data->WriteByteSeq(unkGuid[6]);
+    data->WriteByteSeq(unkGuid[0]);
+    data->WriteByteSeq(unkGuid[2]);
+    data->WriteByteSeq(unkGuid[5]);
+    data->WriteByteSeq(unkGuid[7]);
+
     data->WriteByteSeq(source[2]);
+    data->WriteByteSeq(source[5]);
     data->WriteByteSeq(source[3]);
-    data->WriteByteSeq(source[0]);
     data->WriteByteSeq(source[6]);
     data->WriteByteSeq(source[7]);
-    data->WriteByteSeq(source[5]);
+    data->WriteByteSeq(source[4]);
     data->WriteByteSeq(source[1]);
+    data->WriteByteSeq(source[0]);
 
-    data->WriteByteSeq(target[6]);
-    data->WriteByteSeq(target[1]);
-    data->WriteByteSeq(target[0]);
-    data->WriteByteSeq(target[2]);
-    data->WriteByteSeq(target[4]);
-    data->WriteByteSeq(target[5]);
-    data->WriteByteSeq(target[7]);
-    data->WriteByteSeq(target[3]);
-
-    data->WriteString(text);
     *data << uint8(language);
+    data->WriteString(text);
 }
 
 void Player::Say(const std::string& text, const uint32 language)
@@ -22091,6 +22085,12 @@ void Player::InitDataForForm(bool reapplyMods)
         {
             if (getPowerType() != POWER_RAGE)
                 setPowerType(POWER_RAGE);
+            break;
+        }
+        case FORM_WISE_SERPENT:
+        {
+            if (getPowerType() != POWER_MANA)
+            setPowerType(POWER_MANA);
             break;
         }
         default:                                            // 0, for example
@@ -23682,7 +23682,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
     data.WriteBit(0);                                               // HasRestrictedMoney
     data.WriteBit(0);                                               // HasGroupSize
     data.FlushBits();
-    
+
     data << uint8(0);                                               // IsOnTournamentRealm
     data << uint32(sWorld->GetNextWeeklyQuestsResetTime() - WEEK);  // LastWeeklyReset (not instance reset)
     data << uint32(GetMap()->GetDifficulty());
@@ -24078,14 +24078,16 @@ void Player::SendAurasForTarget(Unit* target)
     Unit::VisibleAuraMap const* visibleAuras = target->GetVisibleAuras();
 
     WorldPacket data(SMSG_AURA_UPDATE);
-    data.WriteBit(targetGuid[3]);
-    data.WriteBit(1);                                   // Is AURA_UPDATE_ALL
-    data.WriteBit(targetGuid[4]);
-    data.WriteBit(targetGuid[5]);
-    data.WriteBits(visibleAuras->size(), 24);           // Aura Count
     data.WriteBit(targetGuid[7]);
+    data.WriteBit(1);                                   // Is AURA_UPDATE_ALL
+    data.WriteBits(visibleAuras->size(), 24);           // Aura Count
     data.WriteBit(targetGuid[6]);
-
+    data.WriteBit(targetGuid[1]);
+    data.WriteBit(targetGuid[3]);
+    data.WriteBit(targetGuid[0]);
+    data.WriteBit(targetGuid[4]);
+    data.WriteBit(targetGuid[2]);
+    data.WriteBit(targetGuid[5]);
 
     for (Unit::VisibleAuraMap::const_iterator itr = visibleAuras->begin(); itr != visibleAuras->end(); ++itr)
     {
@@ -24096,11 +24098,6 @@ void Player::SendAurasForTarget(Unit* target)
             flags |= AFLAG_DURATION;
 
         data.WriteBit(1);                               // Not remove
-        data.WriteBit(flags & AFLAG_DURATION);          // HasDuration
-        data.WriteBits(0, 22);                          // Unk effect count
-
-        data.WriteBit(flags & AFLAG_DURATION);          // HasMaxDuration
-        data.WriteBit(!(flags & AFLAG_CASTER));         // HasCasterGuid
 
         if (flags & AFLAG_ANY_EFFECT_AMOUNT_SENT)
         {
@@ -24114,25 +24111,26 @@ void Player::SendAurasForTarget(Unit* target)
         else
             data.WriteBits(0, 22);                      // Effect Count
 
+        data.WriteBit(!(flags & AFLAG_CASTER));         // HasCasterGuid
 
         if (!(flags & AFLAG_CASTER))
         {
             ObjectGuid casterGuid = aura->GetCasterGUID();
-            data.WriteBit(casterGuid[1]);
+            data.WriteBit(casterGuid[3]);
+            data.WriteBit(casterGuid[4]);
             data.WriteBit(casterGuid[6]);
+            data.WriteBit(casterGuid[1]);
+            data.WriteBit(casterGuid[5]);
+            data.WriteBit(casterGuid[2]);
             data.WriteBit(casterGuid[0]);
             data.WriteBit(casterGuid[7]);
-            data.WriteBit(casterGuid[5]);
-            data.WriteBit(casterGuid[3]);
-            data.WriteBit(casterGuid[2]);
-            data.WriteBit(casterGuid[4]);
         }
 
+        data.WriteBits(0, 22);                          // Unk effect count
+        data.WriteBit(flags & AFLAG_DURATION);          // HasDuration
+        data.WriteBit(flags & AFLAG_DURATION);          // HasMaxDuration
     }
 
-    data.WriteBit(targetGuid[2]);
-    data.WriteBit(targetGuid[0]);
-    data.WriteBit(targetGuid[1]);
     data.FlushBits();
 
     for (Unit::VisibleAuraMap::const_iterator itr = visibleAuras->begin(); itr != visibleAuras->end(); ++itr)
@@ -24146,16 +24144,29 @@ void Player::SendAurasForTarget(Unit* target)
         if (!(flags & AFLAG_CASTER))
         {
             ObjectGuid casterGuid = aura->GetCasterGUID();
-            data.WriteByteSeq(casterGuid[2]);
-            data.WriteByteSeq(casterGuid[5]);
-            data.WriteByteSeq(casterGuid[6]);
-            data.WriteByteSeq(casterGuid[7]);
-            data.WriteByteSeq(casterGuid[0]);
-            data.WriteByteSeq(casterGuid[1]);
-            data.WriteByteSeq(casterGuid[4]);
             data.WriteByteSeq(casterGuid[3]);
+            data.WriteByteSeq(casterGuid[2]);
+            data.WriteByteSeq(casterGuid[1]);
+            data.WriteByteSeq(casterGuid[6]);
+            data.WriteByteSeq(casterGuid[4]);
+            data.WriteByteSeq(casterGuid[0]);
+            data.WriteByteSeq(casterGuid[5]);
+            data.WriteByteSeq(casterGuid[7]);
         }
 
+        data << uint8(flags);
+        data << uint16(aura->GetCasterLevel());
+        data << uint32(aura->GetId());
+
+        if (flags & AFLAG_DURATION)
+            data << uint32(aura->GetMaxDuration());
+
+        if (flags & AFLAG_DURATION)
+            data << uint32(aura->GetDuration());
+
+        // send stack amount for aura which could be stacked (never 0 - causes incorrect display) or charges
+        // stack amount has priority over charges (checked on retail with spell 50262)
+        data << uint8(aura->GetSpellInfo()->StackAmount ? aura->GetStackAmount() : aura->GetCharges());
         data << uint32(auraApp->GetEffectMask());
 
         if (flags & AFLAG_ANY_EFFECT_AMOUNT_SENT)
@@ -24172,30 +24183,16 @@ void Player::SendAurasForTarget(Unit* target)
             }
         }
 
-        data << uint8(flags);
-        data << uint32(aura->GetId());
-        data << uint16(aura->GetCasterLevel());
-        // send stack amount for aura which could be stacked (never 0 - causes incorrect display) or charges
-        // stack amount has priority over charges (checked on retail with spell 50262)
-        data << uint8(aura->GetSpellInfo()->StackAmount ? aura->GetStackAmount() : aura->GetCharges());
-
-        if (flags & AFLAG_DURATION)
-            data << uint32(aura->GetMaxDuration());
-
-        if (flags & AFLAG_DURATION)
-            data << uint32(aura->GetDuration());
-
-            data << uint8(auraApp->GetSlot());
+        data << uint8(auraApp->GetSlot());
     }
 
-
-    data.WriteByteSeq(targetGuid[0]);
-    data.WriteByteSeq(targetGuid[1]);
-    data.WriteByteSeq(targetGuid[3]);
-    data.WriteByteSeq(targetGuid[4]);
     data.WriteByteSeq(targetGuid[2]);
     data.WriteByteSeq(targetGuid[6]);
     data.WriteByteSeq(targetGuid[7]);
+    data.WriteByteSeq(targetGuid[1]);
+    data.WriteByteSeq(targetGuid[3]);
+    data.WriteByteSeq(targetGuid[4]);
+    data.WriteByteSeq(targetGuid[0]);
     data.WriteByteSeq(targetGuid[5]);
 
     GetSession()->SendPacket(&data);
