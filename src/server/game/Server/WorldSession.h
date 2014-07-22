@@ -33,6 +33,7 @@
 #include "Cryptography/BigNumber.h"
 #include "Opcodes.h"
 #include "AccountMgr.h"
+#include "Object.h"
 
 class Creature;
 class GameObject;
@@ -224,7 +225,7 @@ class WorldSession
         void SendPetNameInvalid(uint32 error, std::string const& name, DeclinedName *declinedName);
         void SendPartyResult(PartyOperation operation, std::string const& member, PartyResult res, uint32 val = 0);
         void SendAreaTriggerMessage(const char* Text, ...) ATTR_PRINTF(2, 3);
-        void SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<uint32> const& terrainswaps);
+        void SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<uint32> const& terrainswaps, std::set<uint32> const& worldAreas);
         void SendQueryTimeResponse();
         void SendGroupInviteNotification(const std::string& inviterName, bool inGroup);
 
@@ -467,6 +468,7 @@ class WorldSession
         void HandleGMResponseResolve(WorldPacket& recvPacket);
 
         void HandleTogglePvP(WorldPacket& recvPacket);
+        void HandleSetPvP(WorldPacket& recvPacket);
 
         void HandleZoneUpdateOpcode(WorldPacket& recvPacket);
         void HandleSetSelectionOpcode(WorldPacket& recvPacket);
@@ -525,7 +527,7 @@ class WorldSession
         void HandleGroupInviteOpcode(WorldPacket& recvPacket);
         //void HandleGroupCancelOpcode(WorldPacket& recvPacket);
         void HandleGroupInviteResponseOpcode(WorldPacket& recvPacket);
-        void HandleGroupUninviteOpcode(WorldPacket& recvPacket);
+        //void HandleGroupUninviteOpcode(WorldPacket& recvPacket);
         void HandleGroupUninviteGuidOpcode(WorldPacket& recvPacket);
         void HandleGroupSetLeaderOpcode(WorldPacket& recvPacket);
         void HandleGroupSetRolesOpcode(WorldPacket& recvData);
@@ -580,6 +582,7 @@ class WorldSession
         void HandleSaveGuildEmblemOpcode(WorldPacket& recvPacket);
         void HandleGuildRequestPartyState(WorldPacket& recvPacket);
         void HandleGuildRequestMaxDailyXP(WorldPacket& recvPacket);
+        void HandleGuildRequestChallengeUpdate(WorldPacket& recvPacket);
         void HandleAutoDeclineGuildInvites(WorldPacket& recvPacket);
 
         void HandleGuildFinderAddRecruit(WorldPacket& recvPacket);
@@ -938,6 +941,14 @@ class WorldSession
         void HandleReforgeItemOpcode(WorldPacket& recvData);
         void SendReforgeResult(bool success);
 
+        // BlackMarket
+        void HandleBlackMarketHelloOpcode(WorldPacket& recvData);
+        void SendBlackMarketHello(uint64 guid);
+        void HandleBlackMarketRequestItemOpcode(WorldPacket& recvData);
+        void SendBlackMarketRequestItemsResult();
+        void HandleBlackMarketBidOpcode(WorldPacket& recvData);
+        void SendBlackMarketBidResult();
+
         // Miscellaneous
         void HandleSpellClick(WorldPacket& recvData);
         void HandleMirrorImageDataRequest(WorldPacket& recvData);
@@ -969,6 +980,14 @@ class WorldSession
         // Compact Unit Frames (4.x)
         void HandleSaveCUFProfiles(WorldPacket& recvPacket);
         void SendLoadCUFProfiles();
+
+        // Battle Pets
+        void HandleBattlePetDelete(WorldPacket& recvData);
+        void HandleBattlePetModifyName(WorldPacket& recvData);
+        void HandleBattlePetQueryName(WorldPacket& recvData);
+        void HandleBattlePetSetBattleSlot(WorldPacket& recvData);
+        void HandleBattlePetSetFlags(WorldPacket& recvData);
+        void HandleBattlePetSummonCompanion(WorldPacket& recvData);
 
     private:
         void InitializeQueryCallbackParameters();

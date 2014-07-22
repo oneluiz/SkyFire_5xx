@@ -57,6 +57,7 @@ class PlayerSocial;
 class SpellCastTargets;
 class UpdateMask;
 class PhaseMgr;
+class BattlePetMgr;
 
 typedef std::deque<Mail*> PlayerMails;
 
@@ -535,7 +536,7 @@ enum PlayerFlags
     PLAYER_FLAGS_UNK21                  = 0x00200000,
     PLAYER_FLAGS_COMMENTATOR2           = 0x00400000,
     PLAYER_FLAGS_ALLOW_ONLY_ABILITY     = 0x00800000,       // used by bladestorm and killing spree, allowed only spells with SPELL_ATTR0_REQ_AMMO, SPELL_EFFECT_ATTACK, checked only for active player
-    PLAYER_FLAGS_UNK24                  = 0x01000000,       // disabled all melee ability on tab include autoattack
+    PLAYER_FLAGS_BATTLE_PET_ENABLED     = 0x01000000,
     PLAYER_FLAGS_NO_XP_GAIN             = 0x02000000,
     PLAYER_FLAGS_UNK26                  = 0x04000000,
     PLAYER_FLAGS_AUTO_DECLINE_GUILD     = 0x08000000,       // Automatically declines guild invites
@@ -891,6 +892,8 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOAD_VOID_STORAGE            = 33,
     PLAYER_LOGIN_QUERY_LOAD_CURRENCY                = 34,
     PLAYER_LOGIN_QUERY_LOAD_CUF_PROFILES            = 35,
+    PLAYER_LOGIN_QUERY_LOAD_BATTLE_PETS             = 36,
+    PLAYER_LOGIN_QUERY_LOAD_BATTLE_PET_SLOTS        = 37,
     MAX_PLAYER_LOGIN_QUERY
 };
 
@@ -1340,8 +1343,6 @@ class Player : public Unit, public GridObject<Player>
         /// Handles whispers from Addons and players based on sender, receiver's guid and language.
         void Whisper(std::string const& text, const uint32 language, uint64 receiver);
         void WhisperAddon(std::string const& text, std::string const& prefix, Player* receiver);
-        /// Constructs the player Chat data for the specific functions to use
-        void BuildPlayerChat(WorldPacket* data, uint8 msgtype, std::string const& text, uint32 language, const char* addonPrefix = NULL) const;
 
         /*********************************************************/
         /***                    STORAGE SYSTEM                 ***/
@@ -2125,6 +2126,8 @@ class Player : public Unit, public GridObject<Player>
         void UpdateSkillsToMaxSkillsForLevel();             // for .levelup
         void ModifySkillBonus(uint32 skillid, int32 val, bool talent);
 
+        BattlePetMgr* GetBattlePetMgr() { return m_battlePetMgr; }
+
         /*********************************************************/
         /***                  PVP SYSTEM                       ***/
         /*********************************************************/
@@ -2428,6 +2431,7 @@ class Player : public Unit, public GridObject<Player>
         void SetAuraUpdateMaskForRaid(uint8 slot) { m_auraRaidUpdateMask |= (uint64(1) << slot); }
         Player* GetNextRandomRaidMember(float radius);
         PartyResult CanUninviteFromGroup() const;
+        void SetReadyCheckTimer(uint32 timer) { _readyCheckTimer = timer; }
 
         // Battleground / Battlefield Group System
         void SetBattlegroundOrBattlefieldRaid(Group* group, int8 subgroup = -1);
@@ -2528,6 +2532,8 @@ class Player : public Unit, public GridObject<Player>
         bool SwapVoidStorageItem(uint8 oldSlot, uint8 newSlot);
         VoidStorageItem* GetVoidStorageItem(uint8 slot) const;
         VoidStorageItem* GetVoidStorageItem(uint64 id, uint8& slot) const;
+
+        void ReadyCheckComplete();
 
     protected:
         // Gamemaster whisper whitelist
@@ -2750,6 +2756,7 @@ class Player : public Unit, public GridObject<Player>
 
         uint32 m_drunkTimer;
         uint32 m_weaponChangeTimer;
+        uint32 _readyCheckTimer;
 
         uint32 m_zoneUpdateId;
         uint32 m_zoneUpdateTimer;
@@ -2880,6 +2887,8 @@ class Player : public Unit, public GridObject<Player>
         uint32 _maxPersonalArenaRate;
 
         PhaseMgr phaseMgr;
+
+        BattlePetMgr* m_battlePetMgr;
 };
 
 void AddItemsSetItem(Player*player, Item* item);
