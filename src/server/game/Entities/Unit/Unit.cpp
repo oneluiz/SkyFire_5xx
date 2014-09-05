@@ -202,6 +202,7 @@ Unit::Unit(bool isWorldObject) :
     for (uint8 i = 0; i < MAX_GAMEOBJECT_SLOT; ++i)
         m_ObjectSlot[i] = 0;
 
+    m_overrideAutoattackSpellInfo = 0;
     m_auraUpdateIterator = m_ownedAuras.end();
 
     m_interruptMask = 0;
@@ -1822,9 +1823,12 @@ void Unit::AttackerStateUpdate (Unit* victim, WeaponAttackType attType, bool ext
     if (attType != BASE_ATTACK && attType != OFF_ATTACK)
         return;                                             // ignore ranged case
 
+
     // melee attack spell casted at main hand attack only - no normal melee dmg dealt
     if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL] && !extra)
         m_currentSpells[CURRENT_MELEE_SPELL]->cast();
+    else if (m_overrideAutoattackSpellInfo)
+        CastSpell(victim, m_overrideAutoattackSpellInfo, false);
     else
     {
         // attack can be redirected to another target
@@ -2140,7 +2144,7 @@ void Unit::SendMeleeAttackStop(Unit* victim)
     WorldPacket data(SMSG_ATTACKSTOP, 8 + 8);
 
     ObjectGuid attackerGuid = GetGUID();
-    ObjectGuid victimGuid = victim ? victim->GetGUID() : NULL;
+    ObjectGuid victimGuid = victim ? victim->GetGUID() : 0;
 
     data.WriteBit(victimGuid[5]);
     data.WriteBit(victimGuid[6]);
@@ -8616,12 +8620,71 @@ int32 Unit::HealBySpell(Unit* victim, SpellInfo const* spellInfo, uint32 addHeal
 
 void Unit::SendEnergizeSpellLog(Unit* victim, uint32 spellId, int32 damage, Powers powerType)
 {
+    //bool hasPower = false;
+    ObjectGuid victimGuid = victim->GetGUID();
+    ObjectGuid casterGuid = GetGUID();
+
     WorldPacket data(SMSG_SPELLENERGIZELOG, (8+8+4+4+4+1));
-    data.append(victim->GetPackGUID());
-    data.append(GetPackGUID());
-    data << uint32(spellId);
-    data << uint32(powerType);
+
+    data.WriteBit(victimGuid[7]);
+    data.WriteBit(victimGuid[3]);
+    data.WriteBit(casterGuid[1]);
+    data.WriteBit(victimGuid[4]);
+    data.WriteBit(victimGuid[2]);
+    data.WriteBit(casterGuid[3]);
+    data.WriteBit(victimGuid[5]);
+
+    data.WriteBit(0); // hasPower
+
+    data.WriteBit(casterGuid[7]);
+    data.WriteBit(casterGuid[0]);
+    data.WriteBit(casterGuid[2]);
+
+    //if (hasPower)
+    //    data.WriteBits(count, 21);
+
+    data.WriteBit(casterGuid[4]);
+    data.WriteBit(casterGuid[6]);
+    data.WriteBit(victimGuid[6]);
+    data.WriteBit(victimGuid[1]);
+    data.WriteBit(victimGuid[0]);
+    data.WriteBit(casterGuid[5]);
+
+
+    data.WriteByteSeq(victimGuid[0]);
+    data.WriteByteSeq(casterGuid[5]);
+    data.WriteByteSeq(victimGuid[6]);
+
+    /*if (hasPower)
+    {
+        data << UInt32();
+
+        for (var i = 0; i < count; ++i)
+        {
+            data << Int32();
+            data << Int32();
+        }
+        data << Int32();
+        data << Int32();
+    }*/
+    data.WriteByteSeq(casterGuid[6]);
+    data.WriteByteSeq(victimGuid[2]);
+    data.WriteByteSeq(casterGuid[0]);
+    data.WriteByteSeq(victimGuid[1]);
     data << int32(damage);
+    data.WriteByteSeq(victimGuid[4]);
+    data.WriteByteSeq(casterGuid[1]);
+    data.WriteByteSeq(casterGuid[7]);
+    data.WriteByteSeq(victimGuid[5]);
+    data.WriteByteSeq(casterGuid[2]);
+    data.WriteByteSeq(casterGuid[3]);
+    data.WriteByteSeq(victimGuid[7]);
+    data.WriteByteSeq(casterGuid[4]);
+    data.WriteByteSeq(victimGuid[3]);
+    data << uint32(spellId);
+
+    data << uint32(powerType);
+
     SendMessageToSet(&data, true);
 }
 
@@ -15251,6 +15314,30 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 
 uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
 {
+    if (totemType == 3211)
+        totemType = SUMMON_TYPE_TOTEM_FIRE;
+
+    if (totemType == 3403)
+        totemType = SUMMON_TYPE_TOTEM_FIRE;
+
+    if (totemType == 3402)
+        totemType = SUMMON_TYPE_TOTEM_WATER;
+
+    if (totemType == 3406)
+        totemType = SUMMON_TYPE_TOTEM_AIR;
+
+    if (totemType == 3407)
+        totemType = SUMMON_TYPE_TOTEM_AIR;
+
+    if (totemType == 3405)
+        totemType = SUMMON_TYPE_TOTEM_AIR;
+
+    if (totemType == 3399)
+        totemType = SUMMON_TYPE_TOTEM_AIR;
+
+    if (totemType == 3400)
+        totemType = SUMMON_TYPE_TOTEM_EARTH;
+
     switch (getRace())
     {
         case RACE_ORC:
@@ -15340,6 +15427,23 @@ uint32 Unit::GetModelForTotem(PlayerTotemType totemType)
                     return 30784;
                 case SUMMON_TYPE_TOTEM_AIR:     // air
                     return 30781;
+            }
+            break;
+        }
+        case RACE_PANDAREN_NEUTRAL:
+        case RACE_PANDAREN_ALLIANCE:
+        case RACE_PANDAREN_HORDE:
+        {
+            switch (totemType)
+            {
+                case SUMMON_TYPE_TOTEM_FIRE:    // fire
+                    return 41670;
+                case SUMMON_TYPE_TOTEM_EARTH:   // earth
+                    return 41669;
+                case SUMMON_TYPE_TOTEM_WATER:   // water
+                    return 41671;
+                case SUMMON_TYPE_TOTEM_AIR:     // air
+                    return 41668;
             }
             break;
         }

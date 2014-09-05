@@ -1554,6 +1554,15 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Checking Quest Disables");
     DisableMgr::CheckQuestDisables();                           // must be after loading quests
 
+    TC_LOG_INFO("server.loading", "Loading Quest Objectives...");
+    sObjectMgr->LoadQuestObjectives();
+
+    TC_LOG_INFO("server.loading", "Loading Quest Objective Locales...");
+    sObjectMgr->LoadQuestObjectiveLocales();
+
+    TC_LOG_INFO("server.loading", "Loading Quest Objective Visual Effects...");
+    sObjectMgr->LoadQuestObjectiveVisualEffects();
+
     TC_LOG_INFO("server.loading", "Loading Quest POI");
     sObjectMgr->LoadQuestPOI();
 
@@ -2771,7 +2780,7 @@ void World::SendAutoBroadcast()
     else if (abcenter == 1)
     {
         WorldPacket data(SMSG_NOTIFICATION, 2 + msg.length());
-        data.WriteBits(msg.length(), 13);
+        data.WriteBits(msg.length(), 12);
         data.FlushBits();
         data.WriteString(msg);
         sWorld->SendGlobalMessage(&data);
@@ -2781,7 +2790,7 @@ void World::SendAutoBroadcast()
         sWorld->SendWorldText(LANG_AUTO_BROADCAST, msg.c_str());
 
         WorldPacket data(SMSG_NOTIFICATION, 2 + msg.length());
-        data.WriteBits(msg.length(), 13);
+        data.WriteBits(msg.length(), 12);
         data.FlushBits();
         data.WriteString(msg);
         sWorld->SendGlobalMessage(&data);
